@@ -1,6 +1,8 @@
 import os
 import json
 import hashlib
+import time
+from datetime import datetime
 
 import requests
 from dotenv import load_dotenv
@@ -24,6 +26,7 @@ def api_request(method, params, public_key, secret_key, access_token):
     full_params["sig"] = make_signature(full_params, secret_key)
 
     response = requests.post("https://api.ok.ru/fb.do", params=full_params)
+    response.raise_for_status()
     return response.json()
 
 
@@ -33,7 +36,7 @@ def post_to_ok(message, photo_url=None):
     if photo_url:
         media.append({"type": "link", "url": photo_url})
 
-    result = api_request(
+    post_id = api_request(
         "mediatopic.post",
         {
             "gid": group_gid,
@@ -43,8 +46,8 @@ def post_to_ok(message, photo_url=None):
         public_key, secret_key, access_token
     )
 
-    isinstance(result, str)
-    return result.strip('"')
+    print(f"Пост опубликован! ID: {post_id}")
+    return post_id
 
 
 def delete_post(post_id):
@@ -57,7 +60,27 @@ def delete_post(post_id):
         public_key, secret_key, access_token
     )
 
-    return post_id
+    print(f'Пост удалён! ID: {post_id}')
+
+
+def schedule_action(message, photo_url=None, publish_time=None, delete_time=None):
+    if publish_time:
+        now = datetime.now()
+        wait_seconds = (publish_time - now).total_seconds()
+        if wait_seconds > 0:
+            print(f"До публикации: {wait_seconds:.0f} секунд")
+            time.sleep(wait_seconds)
+
+        post_id = post_to_ok(message, photo_url)
+
+    if delete_time:
+        now = datetime.now()
+        wait_seconds = (delete_time - now).total_seconds()
+        if wait_seconds > 0:
+            print(f"До удаления: {wait_seconds:.0f} секунд")
+            time.sleep(wait_seconds)
+
+        delete_post(post_id)
 
 
 if __name__ == '__main__':
@@ -68,11 +91,12 @@ if __name__ == '__main__':
     group_gid = os.getenv('GROUP_GID')
     access_token = os.getenv('ACCESS_TOKEN')
 
-    post_id = post_to_ok(
-        'тест',
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsmbZ_DFjpgEhgr9U547CMfh9YNljR_KtgVQ&s'
-    )
-    print(f"Пост опубликован! ID: {post_id}")
+    publish_time = datetime(2026, 5, 20, 18, 0, 0)
+    delete_time = datetime(2026, 5, 20, 18, 1, 0)
 
-    post_id = delete_post(post_id)
-    print(f'Пост удалён! ID: {post_id}')
+    schedule_action(
+        'тест',
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsmbZ_DFjpgEhgr9U547CMfh9YNljR_KtgVQ&s',
+        publish_time,
+        delete_time
+    )
