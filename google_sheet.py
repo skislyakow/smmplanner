@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-
+import time
 import gspread
 
 
@@ -74,18 +74,49 @@ def save_to_json(data, path="posts.json"):
     print(f"Сохранено {len(data)} записей в {path}")
 
 
+def update_vk_status(worksheet, row, status, post_id):
+    """Обновляет VK Статус (B) и VK id (C) в таблице"""
+    worksheet.update(values=[[status]], range_name=f"B{row}")
+    if post_id:
+        worksheet.update(values=[[str(post_id)]], range_name=f"C{row}")
+
+
+def update_ok_status(worksheet, row, status, post_id):
+    worksheet.update(values=[[status]], range_name=f'E{row}')
+    if post_id:
+        worksheet.update(values=[[str(post_id)]], range_name=f'F{row}')
+
+
 def main():
     print("Подключаюсь к Google Sheets...")
     client = get_client()
     records = get_sheet_data(client)
+    sheet = client.open_by_key(SHEET_ID)
+    worksheet = sheet.get_worksheet(0)
     posts = parse_records(records)
     save_to_json(posts)
+    
+    print("\nНачинаю обработку строк...")
     for p in posts:
-        print(
-            f"  Строка {p['row']}: {p['text'][:40]}... "
-            f"VK={p['vk']['send']} OK={p['ok']['send']} TG={p['tg']['send']} "
-            f"Дата={p['publish_date']}"
-        )
+        row_num = p["row"]
+        print(f"Проверка строки {row_num}: {p['text'][:20]}...")
+
+        # Имитация интеграции функций обновления:
+        # Если стоит галочка "VK Отправить" и пост еще не отправлен
+        if p["vk"]["send"] and p["vk"]["status"] != "Опубликовано":
+            print(f"  -> Обновляю статус VK для строки {row_num}")
+            #тестовые данные
+            update_vk_status(worksheet, row_num, status="Опубликовано", post_id="vk_test_123")
+            time.sleep(1)  
+
+        # Если стоит галочка "OK Отправить" и пост еще не отправлен
+        if p["ok"]["send"] and p["ok"]["status"] != "Опубликовано":
+            print(f"  -> Обновляю статус OK для строки {row_num}")
+            #тестовые данные
+            update_ok_status(worksheet, row_num, status="Опубликовано", post_id="ok_test_456")
+            time.sleep(1)
+
+    print("\nПромежуточный этап завершен. Проверьте вашу Google Таблицу.")
 
 
 if __name__ == "__main__":
