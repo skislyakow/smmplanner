@@ -90,8 +90,8 @@ def save_to_json(data, path="posts.json"):
 def update_vk_status(worksheet, row, status, post_id):
     """Обновляет VK Статус (B) и VK id (C) в таблице"""
     worksheet.update(values=[[status]], range_name=f"B{row}")
-    if post_id:
-        worksheet.update(values=[[str(post_id)]], range_name=f"C{row}")
+    worksheet.update_acell(f"B{row}", status)
+    worksheet.update_acell(f"C{row}", str(post_id))
 
 
 def update_ok_status(worksheet, row, status, post_id):
