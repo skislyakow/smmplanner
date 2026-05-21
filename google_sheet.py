@@ -1,3 +1,4 @@
+import re
 import json
 from pathlib import Path
 import time
@@ -6,6 +7,16 @@ import gspread
 
 SHEET_ID = "1STS2n8ffi7c1aAY16oGxghlJ1qkbDfMK8OZXTnJEo3g"
 SERVICE_ACCOUNT_PATH = Path(__file__).parent / "service_account.json"
+
+
+
+def make_text_beautiful(text):
+    text = re.sub(r' +', ' ', text)
+    text = re.sub(r' - ', ' — ', text)
+    text = re.sub(r'(^|\s)"', r'\1«', text)
+    text = re.sub(r'"($|\s|[\.,!\?])', r'»\1', text)
+    
+    return text.strip()
 
 
 def get_client():
@@ -31,6 +42,8 @@ def get_sheet_data(client=None, worksheet_index=0):
 def parse_records(records):
     result = []
     for i, row in enumerate(records):
+        raw_text = row.get("Текст поста", "")
+        beautiful_text = make_text_beautiful(raw_text)
         post = {
             "row": i + 2,
             "vk": {
@@ -48,7 +61,7 @@ def parse_records(records):
                 "status": row.get("TG Статус", ""),
                 "post_id": row.get("TG id", ""),
             },
-            "text": row.get("Текст поста", ""),
+            "text": beautiful_text,
             "photo_url": row.get("Фото поста", ""),
             "publish_date": row.get("Дата публикации", ""),
             "delete": _bool(row.get("Удалить")),
@@ -123,7 +136,7 @@ def main():
         if p["tg"]["send"] and p["tg"]["status"] != "Опубликовано":
             print(f"  -> Обновляю статус TG для строки {row_num}")
             #тестовые данные
-            update_ok_status(worksheet, row_num, status="Опубликовано", post_id="TG_test_789")
+            update_tg_status(worksheet, row_num, status="Опубликовано", post_id="TG_test_789")
             time.sleep(1)
 
     print("\nПромежуточный этап завершен. Проверьте вашу Google Таблицу.")
