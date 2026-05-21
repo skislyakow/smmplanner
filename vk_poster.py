@@ -110,6 +110,27 @@ def delete_post(post_id):
     print(f"Пост {post_id} успешно удалён")
 
 
+def check_deletions(posts):
+    for post in posts:
+        if not post["delete"]:
+            continue
+        if not post["vk"]["post_id"]:
+            continue
+        delete_date_str = post["delete_date"]
+        if delete_date_str:
+            try:
+                delete_date = parse_date(delete_date_str)
+                if datetime.now() < delete_date:
+                    continue
+            except ValueError:
+                continue
+
+        delete_post(int(post["vk"]["post_id"]))
+        post["vk"]["status"] = "удалён"
+        post["vk"]["post_id"] = ""
+        update_vk_status(post["row"], "удалён", "")
+
+
 if __name__ == "__main__":
     google_sheet.main()
     posts = load_posts()
@@ -131,6 +152,9 @@ if __name__ == "__main__":
         else:
             update_vk_status(post["row"], "ошибка фото", "")
             post["vk"]["status"] = "ошибка фото"
+
+    print("\nПроверяю посты на удаление...")
+    check_deletions(posts)
 
     with open("posts.json", "w", encoding="utf-8") as f:
         json.dump(posts, f, ensure_ascii=False, indent=2)
