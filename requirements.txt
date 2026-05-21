@@ -1,2 +1,1 @@
-dotenv
-vk_api
+requests==2.32.5
