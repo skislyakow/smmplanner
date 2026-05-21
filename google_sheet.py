@@ -123,7 +123,7 @@ def main():
         if p["tg"]["send"] and p["tg"]["status"] != "Опубликовано":
             print(f"  -> Обновляю статус TG для строки {row_num}")
             #тестовые данные
-            update_ok_status(worksheet, row_num, status="Опубликовано", post_id="TG_test_789")
+            update_tg_status(worksheet, row_num, status="Опубликовано", post_id="TG_test_789")
             time.sleep(1)
 
     print("\nПромежуточный этап завершен. Проверьте вашу Google Таблицу.")
