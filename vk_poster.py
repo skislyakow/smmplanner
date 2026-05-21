@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime
-# from pathlib import Path
+from google_sheet import update_vk_status
 
 from dotenv import load_dotenv
 import requests
@@ -108,9 +108,6 @@ def delete_post(post_id):
 
 
 if __name__ == "__main__":
-    # text = "Тестовый пост с фото"
-    # photo_url = "https://amournsk.ru/upload/medialibrary/f43/f4354e1263bef30293879a313092b2ca.jpg"
-
     posts = load_posts()
     vk_posts = get_vk_posts(posts)
     print(f"Всего постов: {len(posts)}, для VK: {len(vk_posts)}")
@@ -123,6 +120,12 @@ if __name__ == "__main__":
             continue
         post_id = create_post(post["text"], post["photo_url"])
         if post_id:
-            print(f"  Строка {post['row']}: опубликован! ID: {post_id}")
+            update_vk_status(post["row"], "опубликовано", post_id)
+            post["vk"]["status"] = "опубликовано"  # ← обновляем в памяти
+            post["vk"]["post_id"] = str(post_id)
         else:
-            print(f"  Строка {post['row']}: не опубликован (ошибка фото)")
+            update_vk_status(post["row"], "ошибка фото", "")
+            post["vk"]["status"] = "ошибка фото"
+
+    with open("posts.json", "w", encoding="utf-8") as f:
+        json.dump(posts, f, ensure_ascii=False, indent=2)
