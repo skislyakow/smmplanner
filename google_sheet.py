@@ -87,6 +87,12 @@ def update_ok_status(worksheet, row, status, post_id):
         worksheet.update(values=[[str(post_id)]], range_name=f'F{row}')
 
 
+def update_tg_status(worksheet, row, status, post_id):
+    worksheet.update(values=[[status]], range_name=f'H{row}')
+    if post_id:
+        worksheet.update(values=[[str(post_id)]], range_name=f'I{row}')
+
+
 def main():
     print("Подключаюсь к Google Sheets...")
     client = get_client()
@@ -102,18 +108,22 @@ def main():
         print(f"Проверка строки {row_num}: {p['text'][:20]}...")
 
         # Имитация интеграции функций обновления:
-        # Если стоит галочка "VK Отправить" и пост еще не отправлен
         if p["vk"]["send"] and p["vk"]["status"] != "Опубликовано":
             print(f"  -> Обновляю статус VK для строки {row_num}")
             #тестовые данные
             update_vk_status(worksheet, row_num, status="Опубликовано", post_id="vk_test_123")
             time.sleep(1)  
 
-        # Если стоит галочка "OK Отправить" и пост еще не отправлен
         if p["ok"]["send"] and p["ok"]["status"] != "Опубликовано":
             print(f"  -> Обновляю статус OK для строки {row_num}")
             #тестовые данные
             update_ok_status(worksheet, row_num, status="Опубликовано", post_id="ok_test_456")
+            time.sleep(1)
+
+        if p["tg"]["send"] and p["tg"]["status"] != "Опубликовано":
+            print(f"  -> Обновляю статус TG для строки {row_num}")
+            #тестовые данные
+            update_ok_status(worksheet, row_num, status="Опубликовано", post_id="TG_test_789")
             time.sleep(1)
 
     print("\nПромежуточный этап завершен. Проверьте вашу Google Таблицу.")
