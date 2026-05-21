@@ -53,34 +53,34 @@ def send_telegram_post(text: str, image_urls_list: str) -> list[int]:
         return []
 
 # (Work in progress) Функция ниже набросок "Удаление поста по ID" 
-# def delete_telegram_post(message_ids_list: str | int) -> bool:
+def delete_telegram_post(message_ids_list: str | int) -> bool:
 
-#     """Удаляет один опубликованный пост (принимает строку с ID через запятую)."""
-#     load_dotenv()
+    """Удаляет один опубликованный пост (принимает строку с ID через запятую)."""
+    load_dotenv()
 
-#     tg_token = os.getenv("TELEGRAM_TOKEN")
-#     tg_chatid = os.getenv("TELEGRAM_CHAT_ID")
+    tg_token = os.getenv("TELEGRAM_TOKEN")
+    tg_chatid = os.getenv("TELEGRAM_CHAT_ID")
 
-#     if not tg_token or not tg_chatid:
-#         return False
+    if not tg_token or not tg_chatid:
+        return False
 
-#     try:
-#         ids_to_delete = [int(i.strip()) for i in str(message_ids_list).split(",") if i.strip()]
-#     except ValueError:
-#         print(f"[Ошибка TG]: Неверный формат ID для удаления: {message_ids_list}")
-#         return False
+    try:
+        ids_to_delete = [int(i.strip()) for i in str(message_ids_list).split(",") if i.strip()]
+    except ValueError:
+        print(f"[Ошибка TG]: Неверный формат ID для удаления: {message_ids_list}")
+        return False
 
-#     if not ids_to_delete:
-#         return False
+    if not ids_to_delete:
+        return False
 
-#     try:
-#         bot = Bot(token=tg_token)
-#         for msg_id in ids_to_delete:
-#             bot.delete_message(chat_id=tg_chatid, message_id=msg_id)
-#         print(f"Пост ID {ids_to_delete} удален из Telegram.")
-#         return True
-#     except TelegramError as e:
-#         print(f"[Ошибка Telegram API при удалении {ids_to_delete}]: {e}")
-#         if "message to delete not found" in str(e).lower():
-#             return True
-#         return False
+    try:
+        bot = Bot(token=tg_token)
+        for msg_id in ids_to_delete:
+            bot.delete_message(chat_id=tg_chatid, message_id=msg_id)
+        print(f"Пост ID {ids_to_delete} удален из Telegram.")
+        return True
+    except TelegramError as e:
+        print(f"[Ошибка Telegram API при удалении {ids_to_delete}]: {e}")
+        if "message to delete not found" in str(e).lower():
+            return True
+        return False
