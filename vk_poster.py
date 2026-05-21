@@ -1,5 +1,7 @@
 import os
+import json
 from datetime import datetime
+# from pathlib import Path
 
 from dotenv import load_dotenv
 import requests
@@ -18,6 +20,24 @@ vk_group = vk_group_session.get_api()
 
 vk_user_session = vk_api.VkApi(token=VK_USER_TOKEN)
 vk_user = vk_user_session.get_api()
+
+
+def load_posts(path="posts.json"):
+    with open(path, encoding="utf-8") as file:
+        return json.load(file)
+
+
+def get_vk_posts(posts):
+    result = []
+    for post in posts:
+        if post["vk"]["send"] and not post["vk"]["status"]:
+            result.append(post)
+    return result
+
+
+def is_time_to_publish(publish_date_str):
+    pub_date = parse_date(publish_date_str)
+    return datetime.now() >= pub_date
 
 
 def parse_date(date_str):
@@ -39,12 +59,19 @@ def upload_photo_to_wall(photo_url):
 
     upload_result = requests.post(upload_url, files=files).json()
 
-    saved_photo = vk_user.photos.saveWallPhoto(
-        owner_id=VK_GROUP_ID,
-        server=upload_result["server"],
-        photo=upload_result["photo"],
-        hash=upload_result["hash"],
-    )[0]
+    if "photo" not in upload_result:
+        print(f"Ошибка загрузки фото: {photo_url[:60]}")
+        return None
+    try:
+        saved_photo = vk_user.photos.saveWallPhoto(
+            owner_id=VK_GROUP_ID,
+            server=upload_result["server"],
+            photo=upload_result["photo"],
+            hash=upload_result["hash"],
+        )[0]
+    except vk_api.exceptions.VkApiError as error:
+        print(f"Ошибка сохранения фото: {error}")
+        return None
 
     return f"photo{saved_photo['owner_id']}_{saved_photo['id']}"
 
@@ -52,6 +79,9 @@ def upload_photo_to_wall(photo_url):
 def create_post(text, photo_url=None, publish_date=None):
     if photo_url:
         attachment = upload_photo_to_wall(photo_url)
+        if attachment is None:
+            print("Фото не загружено — пост не опубликован")
+            return None
     else:
         attachment = None
 
@@ -78,17 +108,21 @@ def delete_post(post_id):
 
 
 if __name__ == "__main__":
-    text = "Тестовый пост с фото"
-    photo_url = "https://amournsk.ru/upload/medialibrary/f43/f4354e1263bef30293879a313092b2ca.jpg"
+    # text = "Тестовый пост с фото"
+    # photo_url = "https://amournsk.ru/upload/medialibrary/f43/f4354e1263bef30293879a313092b2ca.jpg"
 
-    post_id = create_post(text, photo_url)
-    print(f"Пост опубликован! ID: {post_id}")
+    posts = load_posts()
+    vk_posts = get_vk_posts(posts)
+    print(f"Всего постов: {len(posts)}, для VK: {len(vk_posts)}")
 
-    delete_post(3)
-
-    posts = vk_user.wall.get(owner_id=VK_GROUP_ID, count=15)
-    for p in posts["items"]:
-        print(f"ID: {p['id']}, Date: {p['date']}")
-
-    publish_date = "20.05.2026 - 17:27"
-    create_post(str(publish_date), publish_date=publish_date)
+    for post in vk_posts:
+        if not is_time_to_publish(post["publish_date"]):
+            print(
+                f"  Строка {post['row']}: время ещё не настало ({post['publish_date']})"
+            )
+            continue
+        post_id = create_post(post["text"], post["photo_url"])
+        if post_id:
+            print(f"  Строка {post['row']}: опубликован! ID: {post_id}")
+        else:
+            print(f"  Строка {post['row']}: не опубликован (ошибка фото)")
