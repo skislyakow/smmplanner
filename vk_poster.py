@@ -1,11 +1,14 @@
 import os
 import json
 from datetime import datetime
-from google_sheet import update_vk_status
+
 
 from dotenv import load_dotenv
 import requests
 import vk_api
+
+import google_sheet
+from google_sheet import update_vk_status
 
 
 load_dotenv()
@@ -108,21 +111,23 @@ def delete_post(post_id):
 
 
 if __name__ == "__main__":
+    google_sheet.main()
     posts = load_posts()
     vk_posts = get_vk_posts(posts)
     print(f"Всего постов: {len(posts)}, для VK: {len(vk_posts)}")
 
     for post in vk_posts:
-        if not is_time_to_publish(post["publish_date"]):
-            print(
-                f"  Строка {post['row']}: время ещё не настало ({post['publish_date']})"
-            )
-            continue
-        post_id = create_post(post["text"], post["photo_url"])
+        pub_date_str = post["publish_date"]
+
+        if pub_date_str and parse_date(pub_date_str) > datetime.now():
+            publish_date = pub_date_str
+        else:
+            publish_date = None
+        post_id = create_post(post["text"], post["photo_url"], publish_date)
+
         if post_id:
             update_vk_status(post["row"], "опубликовано", post_id)
-            post["vk"]["status"] = "опубликовано"  # ← обновляем в памяти
-            post["vk"]["post_id"] = str(post_id)
+            post["vk"]["status"] = "опубликовано"
         else:
             update_vk_status(post["row"], "ошибка фото", "")
             post["vk"]["status"] = "ошибка фото"
