@@ -2,6 +2,7 @@ import time
 from datetime import datetime
 
 import google_sheet
+from google_sheet import update_vk_status
 from vk_poster import parse_date, create_post, delete_post
 
 
@@ -17,13 +18,11 @@ def publish_vk(post):
         try:
             post_id = create_post(text, photo_url, publish_date)
             if post_id:
-                google_sheet.update_vk_status(
-                    post["row"], "опубликовано", post_id
-                )
+                update_vk_status(post["row"], "опубликовано", post_id)
                 return
         except Exception as e:
             if attempt == 2:
-                google_sheet.update_vk_status(post["row"], f"ошибка: {e}", "")
+                update_vk_status(post["row"], f"ошибка: {e}", "")
                 return
             time.sleep(10)
 
@@ -33,7 +32,7 @@ def delete_vk(post):
     if delete_date and datetime.now() >= delete_date:
         try:
             delete_post(int(post["vk"]["post_id"]))
-            google_sheet.update_vk_status(post["row"], "удалён", "")
+            update_vk_status(post["row"], "удалён", "")
         except Exception as e:
             print(f"Ошибка удаления строки {post['row']}: {e}")
 
