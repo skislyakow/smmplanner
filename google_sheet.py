@@ -87,11 +87,12 @@ def save_to_json(data, path="posts.json"):
     print(f"Сохранено {len(data)} записей в {path}")
 
 
-def update_vk_status(worksheet, row, status, post_id):
-    """Обновляет VK Статус (B) и VK id (C) в таблице"""
-    worksheet.update(values=[[status]], range_name=f"B{row}")
-    worksheet.update_acell(f"B{row}", status)
-    worksheet.update_acell(f"C{row}", str(post_id))
+def update_vk_status(row, status, post_id=""):
+    client = get_client()
+    sheet = client.open_by_key(SHEET_ID)
+    ws = sheet.get_worksheet(0)
+    ws.update_acell(f"B{row}", status)
+    ws.update_acell(f"C{row}", str(post_id))
 
 
 def update_ok_status(worksheet, row, status, post_id):
@@ -114,32 +115,11 @@ def main():
     worksheet = sheet.get_worksheet(0)
     posts = parse_records(records)
     save_to_json(posts)
-    
-    print("\nНачинаю обработку строк...")
-    for p in posts:
-        row_num = p["row"]
-        print(f"Проверка строки {row_num}: {p['text'][:20]}...")
-
-        # Имитация интеграции функций обновления:
-        if p["vk"]["send"] and p["vk"]["status"] != "Опубликовано":
-            print(f"  -> Обновляю статус VK для строки {row_num}")
-            #тестовые данные
-            update_vk_status(worksheet, row_num, status="Опубликовано", post_id="vk_test_123")
-            time.sleep(1)  
-
-        if p["ok"]["send"] and p["ok"]["status"] != "Опубликовано":
-            print(f"  -> Обновляю статус OK для строки {row_num}")
-            #тестовые данные
-            update_ok_status(worksheet, row_num, status="Опубликовано", post_id="ok_test_456")
-            time.sleep(1)
-
-        if p["tg"]["send"] and p["tg"]["status"] != "Опубликовано":
-            print(f"  -> Обновляю статус TG для строки {row_num}")
-            #тестовые данные
-            update_tg_status(worksheet, row_num, status="Опубликовано", post_id="TG_test_789")
-            time.sleep(1)
-
-    print("\nПромежуточный этап завершен. Проверьте вашу Google Таблицу.")
+    # Логику обработи будем дописывать позже
+    # print("\nНачинаю обработку строк...")
+    # for p in posts:
+    #     row_num = p["row"]
+    #     print(f"Проверка строки {row_num}: {p['text'][:20]}...")
 
 
 if __name__ == "__main__":
