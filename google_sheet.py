@@ -86,27 +86,40 @@ def save_to_json(data, path="posts.json"):
     print(f"Сохранено {len(data)} записей в {path}")
 
 
-def update_vk_status(row, status, post_id=""):
-    client = get_client()
-    sheet = client.open_by_key(SHEET_ID)
-    ws = sheet.get_worksheet(0)
-    ws.update_acell(f"B{row}", status)
-    ws.update_acell(f"C{row}", str(post_id))
-
-
-def update_ok_status(row, status, post_id):
-    client = get_client()
-    sheet = client.open_by_key(SHEET_ID)
-    worksheet = sheet.get_worksheet(0)
-    worksheet.update(values=[[status]], range_name=f'E{row}')
+def update_vk_status(ws, row, status, post_id=""):
+    cell_status = ws.acell(f"B{row}")
+    cell_status.value = status
+    cells_to_update = [cell_status]
+    
     if post_id:
-        worksheet.update(values=[[str(post_id)]], range_name=f'F{row}')
+        cell_id = ws.acell(f"C{row}")
+        cell_id.value = str(post_id)
+        cells_to_update.append(cell_id)
+        
+    ws.update_cells(cells_to_update)
 
 
-def update_tg_status(row, status, post_id):
-    client = get_client()
-    sheet = client.open_by_key(SHEET_ID)
-    worksheet = sheet.get_worksheet(0)
-    worksheet.update(values=[[status]], range_name=f'H{row}')
+def update_ok_status(ws, row, status, post_id=""):
+    cell_status = ws.acell(f"E{row}")
+    cell_status.value = status
+    cells_to_update = [cell_status]
+    
     if post_id:
-        worksheet.update(values=[[str(post_id)]], range_name=f'I{row}')
+        cell_id = ws.acell(f"F{row}")
+        cell_id.value = str(post_id)
+        cells_to_update.append(cell_id)
+        
+    ws.update_cells(cells_to_update)
+
+
+def update_tg_status(ws, row, status, post_id=""):
+    cell_status = ws.acell(f"H{row}")
+    cell_status.value = status
+    cells_to_update = [cell_status]
+    
+    if post_id:
+        cell_id = ws.acell(f"I{row}")
+        cell_id.value = str(post_id)
+        cells_to_update.append(cell_id)
+        
+    ws.update_cells(cells_to_update)
