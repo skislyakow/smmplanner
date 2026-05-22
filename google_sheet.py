@@ -1,7 +1,6 @@
 import re
 import json
 from pathlib import Path
-import time
 import gspread
 
 
@@ -95,32 +94,19 @@ def update_vk_status(row, status, post_id=""):
     ws.update_acell(f"C{row}", str(post_id))
 
 
-def update_ok_status(worksheet, row, status, post_id):
+def update_ok_status(row, status, post_id):
+    client = get_client()
+    sheet = client.open_by_key(SHEET_ID)
+    worksheet = sheet.get_worksheet(0)
     worksheet.update(values=[[status]], range_name=f'E{row}')
     if post_id:
         worksheet.update(values=[[str(post_id)]], range_name=f'F{row}')
 
 
-def update_tg_status(worksheet, row, status, post_id):
+def update_tg_status(row, status, post_id):
+    client = get_client()
+    sheet = client.open_by_key(SHEET_ID)
+    worksheet = sheet.get_worksheet(0)
     worksheet.update(values=[[status]], range_name=f'H{row}')
     if post_id:
         worksheet.update(values=[[str(post_id)]], range_name=f'I{row}')
-
-
-def main():
-    print("Подключаюсь к Google Sheets...")
-    client = get_client()
-    records = get_sheet_data(client)
-    sheet = client.open_by_key(SHEET_ID)
-    worksheet = sheet.get_worksheet(0)
-    posts = parse_records(records)
-    save_to_json(posts)
-    # Логику обработи будем дописывать позже
-    # print("\nНачинаю обработку строк...")
-    # for p in posts:
-    #     row_num = p["row"]
-    #     print(f"Проверка строки {row_num}: {p['text'][:20]}...")
-
-
-if __name__ == "__main__":
-    main()
