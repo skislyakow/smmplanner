@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
-from google_sheet import SHEET_ID, get_sheet_data, parse_records, get_client
+from google_sheet import SHEET_ID, get_sheet_data, parse_records, get_client, update_ok_status
 
 
 def make_signature(params, ok_secret_key):
@@ -74,7 +74,7 @@ def process_all_posts(posts):
                 print(f"\nВремя удалить пост {pub['post_id']}")
                 try:
                     delete_post(pub['post_id'])
-                    update_ok_status(pub['row'], pub['post_id'], "удалён")
+                    update_ok_status(worksheet, pub['row'], "удалён", pub['post_id'])
                     published.remove(pub)
                 except Exception as e:
                     print(f"Ошибка удаления: {e}")
@@ -98,7 +98,7 @@ def process_all_posts(posts):
                             print(f"\nВремя удалить пост {pub['post_id']}")
                             try:
                                 delete_post(pub['post_id'])
-                                update_ok_status(pub['row'], pub['post_id'], "удалён")
+                                update_ok_status(worksheet, pub['row'], "удалён", pub['post_id'])
                                 published.remove(pub)
                             except Exception as e:
                                 print(f"Ошибка удаления: {e}")
@@ -112,14 +112,14 @@ def process_all_posts(posts):
                 'post_id': post_id,
                 'delete_time': post['delete_time']
             })
-            update_ok_status(post['row'], post_id, "опубликован")
+            update_ok_status(worksheet, post['row'], "опубликован", post_id)
 
             if post['delete_time']:
-                update_ok_status(post['row'], post_id, "ожидает удаления")
+                update_ok_status(worksheet, post['row'], "ожидает удаления", post_id)
 
         except Exception as e:
             print(f"Ошибка публикации: {e}")
-            update_ok_status(post['row'], "", "не опубликован")
+            update_ok_status(worksheet, post['row'], "не опубликован", "")
 
     if published:
         for pub in published:
@@ -135,19 +135,9 @@ def process_all_posts(posts):
 
                 try:
                     delete_post(pub['post_id'])
-                    update_ok_status(pub['row'], pub['post_id'], "удалён")
+                    update_ok_status(worksheet, pub['row'], "удалён", pub['post_id'])
                 except Exception as e:
                     print(f"Ошибка удаления: {e}")
-
-
-def update_ok_status(row, post_id, status):
-    client = get_client()
-    sheet = client.open_by_key(SHEET_ID)
-    worksheet = sheet.get_worksheet(0)
-
-    worksheet.update(values=[[status]], range_name=f'E{row}')
-    if post_id:
-        worksheet.update(values=[[str(post_id)]], range_name=f'F{row}')
 
 
 def filter_posts_for_platform(platform, all_posts):
@@ -200,5 +190,9 @@ if __name__ == '__main__':
     ok_secret_key = os.getenv('SECRET_KEY_OK')
     ok_group_gid = os.getenv('GROUP_GID_OK')
     ok_access_token = os.getenv('ACCESS_TOKEN_OK')
+
+    client = get_client()
+    sheet = client.open_by_key(SHEET_ID)
+    worksheet = sheet.get_worksheet(0)
 
     run_ok_posting()

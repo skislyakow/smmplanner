@@ -1,9 +1,14 @@
 import os
+import json
 from datetime import datetime
+
 
 from dotenv import load_dotenv
 import requests
 import vk_api
+
+import google_sheet
+from google_sheet import update_vk_status
 
 
 load_dotenv()
@@ -18,6 +23,24 @@ vk_group = vk_group_session.get_api()
 
 vk_user_session = vk_api.VkApi(token=VK_USER_TOKEN)
 vk_user = vk_user_session.get_api()
+
+
+def load_posts(path="posts.json"):
+    with open(path, encoding="utf-8") as file:
+        return json.load(file)
+
+
+def get_vk_posts(posts):
+    result = []
+    for post in posts:
+        if post["vk"]["send"] and not post["vk"]["status"]:
+            result.append(post)
+    return result
+
+
+def is_time_to_publish(publish_date_str):
+    pub_date = parse_date(publish_date_str)
+    return datetime.now() >= pub_date
 
 
 def parse_date(date_str):
@@ -39,12 +62,19 @@ def upload_photo_to_wall(photo_url):
 
     upload_result = requests.post(upload_url, files=files).json()
 
-    saved_photo = vk_user.photos.saveWallPhoto(
-        owner_id=VK_GROUP_ID,
-        server=upload_result["server"],
-        photo=upload_result["photo"],
-        hash=upload_result["hash"],
-    )[0]
+    if "photo" not in upload_result:
+        print(f"Ошибка загрузки фото: {photo_url[:60]}")
+        return None
+    try:
+        saved_photo = vk_user.photos.saveWallPhoto(
+            owner_id=VK_GROUP_ID,
+            server=upload_result["server"],
+            photo=upload_result["photo"],
+            hash=upload_result["hash"],
+        )[0]
+    except vk_api.exceptions.VkApiError as error:
+        print(f"Ошибка сохранения фото: {error}")
+        return None
 
     return f"photo{saved_photo['owner_id']}_{saved_photo['id']}"
 
@@ -52,6 +82,9 @@ def upload_photo_to_wall(photo_url):
 def create_post(text, photo_url=None, publish_date=None):
     if photo_url:
         attachment = upload_photo_to_wall(photo_url)
+        if attachment is None:
+            print("Фото не загружено — пост не опубликован")
+            return None
     else:
         attachment = None
 
@@ -77,18 +110,51 @@ def delete_post(post_id):
     print(f"Пост {post_id} успешно удалён")
 
 
+def check_deletions(posts):
+    for post in posts:
+        if not post["delete"]:
+            continue
+        if not post["vk"]["post_id"]:
+            continue
+        delete_date_str = post["delete_date"]
+        if delete_date_str:
+            try:
+                delete_date = parse_date(delete_date_str)
+                if datetime.now() < delete_date:
+                    continue
+            except ValueError:
+                continue
+
+        delete_post(int(post["vk"]["post_id"]))
+        post["vk"]["status"] = "удалён"
+        post["vk"]["post_id"] = ""
+        update_vk_status(post["row"], "удалён", "")
+
+
 if __name__ == "__main__":
-    text = "Тестовый пост с фото"
-    photo_url = "https://amournsk.ru/upload/medialibrary/f43/f4354e1263bef30293879a313092b2ca.jpg"
+    google_sheet.main()
+    posts = load_posts()
+    vk_posts = get_vk_posts(posts)
+    print(f"Всего постов: {len(posts)}, для VK: {len(vk_posts)}")
 
-    post_id = create_post(text, photo_url)
-    print(f"Пост опубликован! ID: {post_id}")
+    for post in vk_posts:
+        pub_date_str = post["publish_date"]
 
-    delete_post(3)
+        if pub_date_str and parse_date(pub_date_str) > datetime.now():
+            publish_date = pub_date_str
+        else:
+            publish_date = None
+        post_id = create_post(post["text"], post["photo_url"], publish_date)
 
-    posts = vk_user.wall.get(owner_id=VK_GROUP_ID, count=15)
-    for p in posts["items"]:
-        print(f"ID: {p['id']}, Date: {p['date']}")
+        if post_id:
+            update_vk_status(post["row"], "опубликовано", post_id)
+            post["vk"]["status"] = "опубликовано"
+        else:
+            update_vk_status(post["row"], "ошибка фото", "")
+            post["vk"]["status"] = "ошибка фото"
 
-    publish_date = "20.05.2026 - 17:27"
-    create_post(str(publish_date), publish_date=publish_date)
+    print("\nПроверяю посты на удаление...")
+    check_deletions(posts)
+
+    with open("posts.json", "w", encoding="utf-8") as f:
+        json.dump(posts, f, ensure_ascii=False, indent=2)
