@@ -1,5 +1,6 @@
 import os
-import json
+
+# import json
 from datetime import datetime
 
 
@@ -7,8 +8,8 @@ from dotenv import load_dotenv
 import requests
 import vk_api
 
-import google_sheet
-from google_sheet import update_vk_status
+# import google_sheet
+# from google_sheet import update_vk_status
 
 
 load_dotenv()
@@ -25,22 +26,22 @@ vk_user_session = vk_api.VkApi(token=VK_USER_TOKEN)
 vk_user = vk_user_session.get_api()
 
 
-def load_posts(path="posts.json"):
-    with open(path, encoding="utf-8") as file:
-        return json.load(file)
+# def load_posts(path="posts.json"):
+#    with open(path, encoding="utf-8") as file:
+#        return json.load(file)
+#
+#
+# def get_vk_posts(posts):
+#    result = []
+#    for post in posts:
+#        if post["vk"]["send"] and not post["vk"]["status"]:
+#            result.append(post)
+#    return result
 
 
-def get_vk_posts(posts):
-    result = []
-    for post in posts:
-        if post["vk"]["send"] and not post["vk"]["status"]:
-            result.append(post)
-    return result
-
-
-def is_time_to_publish(publish_date_str):
-    pub_date = parse_date(publish_date_str)
-    return datetime.now() >= pub_date
+# def is_time_to_publish(publish_date_str):
+#    pub_date = parse_date(publish_date_str)
+#    return datetime.now() >= pub_date
 
 
 def parse_date(date_str):
@@ -110,51 +111,51 @@ def delete_post(post_id):
     print(f"Пост {post_id} успешно удалён")
 
 
-def check_deletions(posts):
-    for post in posts:
-        if not post["delete"]:
-            continue
-        if not post["vk"]["post_id"]:
-            continue
-        delete_date_str = post["delete_date"]
-        if delete_date_str:
-            try:
-                delete_date = parse_date(delete_date_str)
-                if datetime.now() < delete_date:
-                    continue
-            except ValueError:
-                continue
+# def check_deletions(posts):
+#    for post in posts:
+#        if not post["delete"]:
+#            continue
+#        if not post["vk"]["post_id"]:
+#            continue
+#        delete_date_str = post["delete_date"]
+#        if delete_date_str:
+#            try:
+#                delete_date = parse_date(delete_date_str)
+#                if datetime.now() < delete_date:
+#                    continue
+#            except ValueError:
+#                continue
+#
+#        delete_post(int(post["vk"]["post_id"]))
+#        post["vk"]["status"] = "удалён"
+#        post["vk"]["post_id"] = ""
+#        update_vk_status(post["row"], "удалён", "")
 
-        delete_post(int(post["vk"]["post_id"]))
-        post["vk"]["status"] = "удалён"
-        post["vk"]["post_id"] = ""
-        update_vk_status(post["row"], "удалён", "")
 
-
-if __name__ == "__main__":
-    google_sheet.main()
-    posts = load_posts()
-    vk_posts = get_vk_posts(posts)
-    print(f"Всего постов: {len(posts)}, для VK: {len(vk_posts)}")
-
-    for post in vk_posts:
-        pub_date_str = post["publish_date"]
-
-        if pub_date_str and parse_date(pub_date_str) > datetime.now():
-            publish_date = pub_date_str
-        else:
-            publish_date = None
-        post_id = create_post(post["text"], post["photo_url"], publish_date)
-
-        if post_id:
-            update_vk_status(post["row"], "опубликовано", post_id)
-            post["vk"]["status"] = "опубликовано"
-        else:
-            update_vk_status(post["row"], "ошибка фото", "")
-            post["vk"]["status"] = "ошибка фото"
-
-    print("\nПроверяю посты на удаление...")
-    check_deletions(posts)
-
-    with open("posts.json", "w", encoding="utf-8") as f:
-        json.dump(posts, f, ensure_ascii=False, indent=2)
+# if __name__ == "__main__":
+#    google_sheet.main()
+#    posts = load_posts()
+#    vk_posts = get_vk_posts(posts)
+#    print(f"Всего постов: {len(posts)}, для VK: {len(vk_posts)}")
+#
+#    for post in vk_posts:
+#        pub_date_str = post["publish_date"]
+#
+#        if pub_date_str and parse_date(pub_date_str) > datetime.now():
+#            publish_date = pub_date_str
+#        else:
+#            publish_date = None
+#        post_id = create_post(post["text"], post["photo_url"], publish_date)
+#
+#        if post_id:
+#            update_vk_status(post["row"], "опубликовано", post_id)
+#            post["vk"]["status"] = "опубликовано"
+#        else:
+#            update_vk_status(post["row"], "ошибка фото", "")
+#            post["vk"]["status"] = "ошибка фото"
+#
+#    print("\nПроверяю посты на удаление...")
+#    check_deletions(posts)
+#
+#    with open("posts.json", "w", encoding="utf-8") as f:
+#        json.dump(posts, f, ensure_ascii=False, indent=2)
