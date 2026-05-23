@@ -108,7 +108,6 @@ def vk_create_post(text, photo_url=None, publish_date=None):
 
 def vk_delete_post(post_id):
     vk_user.wall.delete(owner_id=VK_GROUP_ID, post_id=post_id)
-    print(f"Пост {post_id} успешно удалён")
 
 
 # def check_deletions(posts):
