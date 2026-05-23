@@ -1,18 +1,11 @@
 import os
 
-# import json
 from datetime import datetime
 
 
-from dotenv import load_dotenv
 import requests
 import vk_api
 
-# import google_sheet
-# from google_sheet import update_vk_status
-
-
-load_dotenv()
 
 VK_GROUP_TOKEN = os.getenv("VK_GROUP_TOKEN")
 VK_USER_TOKEN = os.getenv("VK_USER_TOKEN")
@@ -26,25 +19,8 @@ vk_user_session = vk_api.VkApi(token=VK_USER_TOKEN)
 vk_user = vk_user_session.get_api()
 
 
-# def load_posts(path="posts.json"):
-#    with open(path, encoding="utf-8") as file:
-#        return json.load(file)
-#
-#
-# def get_vk_posts(posts):
-#    result = []
-#    for post in posts:
-#        if post["vk"]["send"] and not post["vk"]["status"]:
-#            result.append(post)
-#    return result
-
-
-# def is_time_to_publish(publish_date_str):
-#    pub_date = parse_date(publish_date_str)
-#    return datetime.now() >= pub_date
-
-
 def parse_date(date_str):
+    """Преобразует строку даты в datetime. Форматы: ДД.ММ.ГГГГ ЧЧ:ММ"""
     date_str = date_str.strip()
     for fmt in ["%d.%m.%Y - %H:%M", "%d.%m.%Y %H:%M", "%d.%m.%Y"]:
         try:
@@ -55,6 +31,7 @@ def parse_date(date_str):
 
 
 def upload_photo_to_wall(photo_url):
+    """Загружает фото на стену VK, возвращает attachment строку или None"""
     upload_server = vk_user.photos.getWallUploadServer(owner_id=VK_GROUP_ID)
     upload_url = upload_server["upload_url"]
 
@@ -81,6 +58,7 @@ def upload_photo_to_wall(photo_url):
 
 
 def vk_create_post(text, photo_url=None, publish_date=None):
+    """Публикует пост VK (сразу или отложенно). Возвращает post_id или None"""
     if photo_url:
         attachment = upload_photo_to_wall(photo_url)
         if attachment is None:
@@ -107,54 +85,5 @@ def vk_create_post(text, photo_url=None, publish_date=None):
 
 
 def vk_delete_post(post_id):
+    """Удаляет пост VK по post_id с помощью токена пользователя"""
     vk_user.wall.delete(owner_id=VK_GROUP_ID, post_id=post_id)
-
-
-# def check_deletions(posts):
-#    for post in posts:
-#        if not post["delete"]:
-#            continue
-#        if not post["vk"]["post_id"]:
-#            continue
-#        delete_date_str = post["delete_date"]
-#        if delete_date_str:
-#            try:
-#                delete_date = parse_date(delete_date_str)
-#                if datetime.now() < delete_date:
-#                    continue
-#            except ValueError:
-#                continue
-#
-#        delete_post(int(post["vk"]["post_id"]))
-#        post["vk"]["status"] = "удалён"
-#        post["vk"]["post_id"] = ""
-#        update_vk_status(post["row"], "удалён", "")
-
-
-# if __name__ == "__main__":
-#    google_sheet.main()
-#    posts = load_posts()
-#    vk_posts = get_vk_posts(posts)
-#    print(f"Всего постов: {len(posts)}, для VK: {len(vk_posts)}")
-#
-#    for post in vk_posts:
-#        pub_date_str = post["publish_date"]
-#
-#        if pub_date_str and parse_date(pub_date_str) > datetime.now():
-#            publish_date = pub_date_str
-#        else:
-#            publish_date = None
-#        post_id = create_post(post["text"], post["photo_url"], publish_date)
-#
-#        if post_id:
-#            update_vk_status(post["row"], "опубликовано", post_id)
-#            post["vk"]["status"] = "опубликовано"
-#        else:
-#            update_vk_status(post["row"], "ошибка фото", "")
-#            post["vk"]["status"] = "ошибка фото"
-#
-#    print("\nПроверяю посты на удаление...")
-#    check_deletions(posts)
-#
-#    with open("posts.json", "w", encoding="utf-8") as f:
-#        json.dump(posts, f, ensure_ascii=False, indent=2)
