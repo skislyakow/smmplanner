@@ -14,6 +14,7 @@ PLATFORM_COLS = {
 
 
 def make_text_beautiful(text):
+    """Очищает и форматирует текст"""
     text = re.sub(r" +", " ", text)
     text = re.sub(r" - ", " — ", text)
     text = re.sub(r'(^|\s)"', r"\1«", text)
@@ -22,6 +23,7 @@ def make_text_beautiful(text):
 
 
 def get_client():
+    """Возвращает авторизованный клиент Google Sheets"""
     if not SERVICE_ACCOUNT_PATH.exists():
         raise FileNotFoundError(
             f"Файл {SERVICE_ACCOUNT_PATH} не найден. "
@@ -31,6 +33,7 @@ def get_client():
 
 
 def get_sheet_and_data():
+    """Получает рабочий лист и все записи из таблицы Google"""
     try:
         client = get_client()
         if not client:
@@ -64,6 +67,7 @@ def update_status(sheet, platform, row, status, post_id, cell_list):
 
 
 def parse_records(records):
+    """Преобразует строки таблицы в список словарей с данными постов"""
     result = []
     for i, row in enumerate(records):
         raw_text = row.get("Текст поста", "")
@@ -96,6 +100,7 @@ def parse_records(records):
 
 
 def _bool(value):
+    """Преобразует значение (None, bool, str) в булев тип"""
     if value is None:
         return False
     if isinstance(value, bool):
