@@ -3,18 +3,22 @@ import json
 from pathlib import Path
 import gspread
 
-
 SHEET_ID = "1STS2n8ffi7c1aAY16oGxghlJ1qkbDfMK8OZXTnJEo3g"
 SERVICE_ACCOUNT_PATH = Path(__file__).parent / "service_account.json"
 WORKSHEET_INDEX = 0
+# Колонки для каждой платформы: (статус, id)
+PLATFORM_COLS = {
+    "vk": ("B", "C"),
+    "ok": ("E", "F"),
+    "tg": ("H", "I"),
+}
 
 
 def make_text_beautiful(text):
-    text = re.sub(r' +', ' ', text)
-    text = re.sub(r' - ', ' — ', text)
-    text = re.sub(r'(^|\s)"', r'\1«', text)
-    text = re.sub(r'"($|\s|[\.,!\?])', r'»\1', text)
-    
+    text = re.sub(r" +", " ", text)
+    text = re.sub(r" - ", " — ", text)
+    text = re.sub(r'(^|\s)"', r"\1«", text)
+    text = re.sub(r'"($|\s|[\.,!\?])', r"»\1", text)
     return text.strip()
 
 
@@ -47,6 +51,17 @@ def update_cells(sheet, cell_objects):
             sheet.update_cells(cell_objects)
         except Exception as e:
             print(f"Ошибка при обновлении ячеек: {e}")
+
+
+def update_status(sheet, platform, row, status, post_id, cell_list):
+    """Единая функция для обновления статуса любой платформы"""
+    col_status, col_id = PLATFORM_COLS[platform]
+    cell_status = sheet.acell(f"{col_status}{row}")
+    cell_status.value = status
+    cell_list.append(cell_status)
+    cell_id = sheet.acell(f"{col_id}{row}")
+    cell_id.value = str(post_id)
+    cell_list.append(cell_id)
 
 
 def parse_records(records):
@@ -95,33 +110,3 @@ def save_to_json(data, path="posts.json"):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"Сохранено {len(data)} записей в {path}")
-
-
-def update_vk_status(sheet, row, status, post_id, cell_list):
-    cell_status = sheet.acell(f"B{row}")
-    cell_status.value = status
-    cell_list.append(cell_status)
-
-    cell_id = sheet.acell(f"C{row}")
-    cell_id.value = str(post_id)
-    cell_list.append(cell_id)
-
-
-def update_ok_status(sheet, row, status, post_id, cell_list):
-    cell_status = sheet.acell(f"E{row}")
-    cell_status.value = status
-    cell_list.append(cell_status)
-
-    cell_id = sheet.acell(f"F{row}")
-    cell_id.value = str(post_id)
-    cell_list.append(cell_id)
-
-
-def update_tg_status(sheet, row, status, post_id, cell_list):
-    cell_status = sheet.acell(f"H{row}")
-    cell_status.value = status
-    cell_list.append(cell_status)
-
-    cell_id = sheet.acell(f"I{row}")
-    cell_id.value = str(post_id)
-    cell_list.append(cell_id)
