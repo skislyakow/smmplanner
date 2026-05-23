@@ -6,7 +6,7 @@ import gspread
 
 SHEET_ID = "1STS2n8ffi7c1aAY16oGxghlJ1qkbDfMK8OZXTnJEo3g"
 SERVICE_ACCOUNT_PATH = Path(__file__).parent / "service_account.json"
-
+WORKSHEET_INDEX = 0
 
 
 def make_text_beautiful(text):
@@ -27,15 +27,26 @@ def get_client():
     return gspread.service_account(filename=str(SERVICE_ACCOUNT_PATH))
 
 
-def get_sheet_data(client=None, worksheet_index=0):
-    if client is None:
+def get_sheet_and_data():
+    try:
         client = get_client()
+        if not client:
+            return None, None
+        sheet = client.open_by_key(SHEET_ID).get_worksheet(WORKSHEET_INDEX)
+        records = sheet.get_all_records()
+        return sheet, records
+    except Exception as e:
+        print(f"Ошибка получения данных из Google: {e}")
+        return None, None
 
-    sheet = client.open_by_key(SHEET_ID)
-    worksheet = sheet.get_worksheet(worksheet_index)
 
-    records = worksheet.get_all_records()
-    return records
+def update_cells(sheet, cell_objects):
+    """Массовое обновление ячеек одним запросом"""
+    if sheet and cell_objects:
+        try:
+            sheet.update_cells(cell_objects)
+        except Exception as e:
+            print(f"Ошибка при обновлении ячеек: {e}")
 
 
 def parse_records(records):
@@ -86,40 +97,31 @@ def save_to_json(data, path="posts.json"):
     print(f"Сохранено {len(data)} записей в {path}")
 
 
-def update_vk_status(ws, row, status, post_id=""):
-    cell_status = ws.acell(f"B{row}")
+def update_vk_status(sheet, row, status, post_id, cell_list):
+    cell_status = sheet.acell(f"B{row}")
     cell_status.value = status
-    cells_to_update = [cell_status]
-    
-    if post_id:
-        cell_id = ws.acell(f"C{row}")
-        cell_id.value = str(post_id)
-        cells_to_update.append(cell_id)
-        
-    ws.update_cells(cells_to_update)
+    cell_list.append(cell_status)
+
+    cell_id = sheet.acell(f"C{row}")
+    cell_id.value = str(post_id)
+    cell_list.append(cell_id)
 
 
-def update_ok_status(ws, row, status, post_id=""):
-    cell_status = ws.acell(f"E{row}")
+def update_ok_status(sheet, row, status, post_id, cell_list):
+    cell_status = sheet.acell(f"E{row}")
     cell_status.value = status
-    cells_to_update = [cell_status]
-    
-    if post_id:
-        cell_id = ws.acell(f"F{row}")
-        cell_id.value = str(post_id)
-        cells_to_update.append(cell_id)
-        
-    ws.update_cells(cells_to_update)
+    cell_list.append(cell_status)
+
+    cell_id = sheet.acell(f"F{row}")
+    cell_id.value = str(post_id)
+    cell_list.append(cell_id)
 
 
-def update_tg_status(ws, row, status, post_id=""):
-    cell_status = ws.acell(f"H{row}")
+def update_tg_status(sheet, row, status, post_id, cell_list):
+    cell_status = sheet.acell(f"H{row}")
     cell_status.value = status
-    cells_to_update = [cell_status]
-    
-    if post_id:
-        cell_id = ws.acell(f"I{row}")
-        cell_id.value = str(post_id)
-        cells_to_update.append(cell_id)
-        
-    ws.update_cells(cells_to_update)
+    cell_list.append(cell_status)
+
+    cell_id = sheet.acell(f"I{row}")
+    cell_id.value = str(post_id)
+    cell_list.append(cell_id)
