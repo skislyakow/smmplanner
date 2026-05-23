@@ -1,10 +1,7 @@
 import time
 from datetime import datetime
 
-from google_sheet import (
-    get_sheet_and_data, parse_records, update_cells,
-    update_vk_status, update_ok_status, update_tg_status
-)
+from google_sheet import get_sheet_and_data, parse_records, update_cells, update_status
 from vk_poster import parse_date, vk_create_post, vk_delete_post
 from ok_poster import ok_create_post, ok_delete_post
 from tg_poster import tg_create_post, tg_delete_post
@@ -26,12 +23,12 @@ def publish_post(sheet, post, cell_list):
             try:
                 post_id = vk_create_post(text, photo_url, publish_date)
                 if post_id:
-                    update_vk_status(sheet, post["row"], "опубликовано", post_id, cell_list)
+                    update_status(sheet, 'vk', post["row"], "опубликовано", post_id, cell_list)
                     print(f"[VK] Опубликовано: {post_id}")
                     break
             except Exception as e:
                 if attempt == 2:
-                    update_vk_status(sheet, post["row"], f"ошибка: {e}", "", cell_list)
+                    update_status(sheet, 'vk', post["row"], f"ошибка: {e}", "", cell_list)
                 time.sleep(5)
 
     if post["ok"]["send"] and not post["ok"]["status"]:
@@ -39,12 +36,12 @@ def publish_post(sheet, post, cell_list):
             try:
                 post_id = ok_create_post(text, photo_url)
                 if post_id:
-                    update_ok_status(sheet, post["row"], "опубликован", post_id, cell_list)
+                    update_status(sheet, 'ok', post["row"], "опубликован", post_id, cell_list)
                     print(f"[OK] Опубликовано: {post_id}")
                     break
             except Exception as e:
                 if attempt == 2:
-                    update_ok_status(sheet, post["row"], f"ошибка: {e}", "", cell_list)
+                    update_status(sheet, 'ok', post["row"], f"ошибка: {e}", "", cell_list)
                 time.sleep(5)
 
     if post["tg"]["send"] and not post["tg"]["status"]:
@@ -52,12 +49,12 @@ def publish_post(sheet, post, cell_list):
             try:
                 post_id = tg_create_post(text, photo_url)
                 if post_id:
-                    update_tg_status(sheet, post["row"], "опубликован", post_id, cell_list)
+                    update_status(sheet, 'tg', post["row"], "опубликован", post_id, cell_list)
                     print(f"[TG] Опубликовано: {post_id}")
                     break
             except Exception as e:
                 if attempt == 2:
-                    update_tg_status(sheet, post["row"], f"ошибка: {e}", "", cell_list)
+                    update_status(sheet, 'tg', post["row"], f"ошибка: {e}", "", cell_list)
                 time.sleep(5)
 
 
@@ -70,7 +67,7 @@ def delete_post(sheet, post, cell_list):
     if vk_id and post["vk"]["status"] == "опубликовано":
         try:
             vk_delete_post(vk_id)
-            update_vk_status(sheet, post["row"], "удалён", "", cell_list)
+            update_status(sheet, 'vk', post["row"], "удалён", "", cell_list)
             print(f"[VK] Удалён: {vk_id}")
         except Exception as e:
             print(f"[VK] Ошибка удаления: {e}")
@@ -79,7 +76,7 @@ def delete_post(sheet, post, cell_list):
     if ok_id and post["ok"]["status"] == "опубликован":
         try:
             ok_delete_post(ok_id)
-            update_ok_status(sheet, post["row"], "удалён", "", cell_list)
+            update_status(sheet, 'ok', post["row"], "удалён", "", cell_list)
             print(f"[OK] Удалён: {ok_id}")
         except Exception as e:
             print(f"[OK] Ошибка удаления: {e}")
@@ -88,7 +85,7 @@ def delete_post(sheet, post, cell_list):
     if tg_id and post["tg"]["status"] == "опубликован":
         try:
             tg_delete_post(tg_id)
-            update_tg_status(sheet, post["row"], "удалён", "", cell_list)
+            update_status(sheet, 'tg', post["row"], "удалён", "", cell_list)
             print(f"[TG] Удалён: {tg_id}")
         except Exception as e:
             print(f"[TG] Ошибка удаления: {e}")
