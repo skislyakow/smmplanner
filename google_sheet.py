@@ -1,5 +1,4 @@
 import re
-import json
 from pathlib import Path
 import gspread
 
@@ -104,9 +103,3 @@ def _bool(value):
     if isinstance(value, str):
         return value.strip().lower() in ("1", "yes", "true", "да", "+")
     return bool(value)
-
-
-def save_to_json(data, path="posts.json"):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"Сохранено {len(data)} записей в {path}")
