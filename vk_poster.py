@@ -36,7 +36,6 @@ def upload_photo_to_wall(photo_url):
     try:
         photo_data = requests.get(photo_url).content
     except requests.RequestException:
-        # print(f"Ошибка загрузки фото: {photo_url[:60]}")
         return None
     files = {"photo": ("photo.jpg", photo_data, "image/jpeg")}
 
