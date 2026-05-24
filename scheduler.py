@@ -46,17 +46,31 @@ def publish_post(sheet, post, cell_list):
                     )
                     log(f"[VK] Опубликовано: {post_id}")
                     break
+                else:
+                    if attempt < 2:
+                        log("[VK] Ошибка загрузки фото — повтор через 5 сек")
+                        time.sleep(5)
             except Exception as e:
                 if attempt == 2:
                     update_status(
-                        sheet, "vk", post["row"], f"ошибка: {e}", "", cell_list
+                        sheet,
+                        "vk",
+                        post["row"],
+                        f"ошибка: {e}",
+                        "",
+                        cell_list,
                     )
                     log(f"[VK] Ошибка: {e}")
                 time.sleep(5)
-        else:  # выполняется если break не сработал
+        else:
             if not post_id:
                 update_status(
-                    sheet, "vk", post["row"], "ошибка фото", "", cell_list
+                    sheet,
+                    "vk",
+                    post["row"],
+                    "ошибка фото",
+                    "",
+                    cell_list,
                 )
                 log("[VK] Ошибка: фото не загрузилось после 3 попыток")
 

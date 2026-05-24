@@ -36,7 +36,7 @@ def upload_photo_to_wall(photo_url):
     try:
         photo_data = requests.get(photo_url).content
     except requests.RequestException:
-        print(f"Ошибка загрузки фото: {photo_url[:60]}")
+        # print(f"Ошибка загрузки фото: {photo_url[:60]}")
         return None
     files = {"photo": ("photo.jpg", photo_data, "image/jpeg")}
 
@@ -44,13 +44,9 @@ def upload_photo_to_wall(photo_url):
     try:
         upload_result = upload_response.json()
     except ValueError:
-        print(
-            f"Ошибка: сервер VK вернул не JSON. Status: {upload_response.status_code}"
-        )
         return None
 
     if "photo" not in upload_result:
-        print(f"Ошибка загрузки фото: {photo_url[:60]}")
         return None
     try:
         saved_photo = vk_user.photos.saveWallPhoto(
@@ -59,8 +55,7 @@ def upload_photo_to_wall(photo_url):
             photo=upload_result["photo"],
             hash=upload_result["hash"],
         )[0]
-    except vk_api.exceptions.VkApiError as error:
-        print(f"Ошибка сохранения фото: {error}")
+    except vk_api.exceptions.VkApiError:
         return None
 
     return f"photo{saved_photo['owner_id']}_{saved_photo['id']}"
@@ -71,7 +66,6 @@ def vk_create_post(text, photo_url=None, publish_date=None):
     if photo_url:
         attachment = upload_photo_to_wall(photo_url)
         if attachment is None:
-            print("Фото не загружено — пост не опубликован")
             return None
     else:
         attachment = None
