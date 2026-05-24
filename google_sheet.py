@@ -1,8 +1,10 @@
+import os
 import re
 from pathlib import Path
+
 import gspread
 
-SHEET_ID = "1STS2n8ffi7c1aAY16oGxghlJ1qkbDfMK8OZXTnJEo3g"
+SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 SERVICE_ACCOUNT_PATH = Path(__file__).parent / "service_account.json"
 WORKSHEET_INDEX = 0
 # Колонки для каждой платформы: (статус, id)
