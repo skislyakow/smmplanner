@@ -34,6 +34,25 @@ def _make_request(url, params):
 
 # Добавлено / Конец
 
+# Проверить def _make_request
+# Добавлено / Начало
+def _make_request(url, params):
+    """Внутренний хелпер для безопасного выполнения запросов."""
+    try:
+        # timeout=10 защищает от бесконечного зависания при обрыве связи
+        response = requests.post(url, data=params, timeout=10)
+        response.raise_for_status() 
+        return response.json()
+
+    except requests.exceptions.Timeout:
+        raise Exception("Ошибка: Время ожидания ответа от Telegram истекло (Timeout).")
+    except requests.exceptions.ConnectionError:
+        raise Exception("Ошибка: Нет соединения с интернетом или сервер Telegram недоступен.")
+    except requests.exceptions.HTTPError as http_err:
+        raise Exception(f"HTTP ошибка: Сервер вернул код {response.status_code}. Текст: {http_err}")
+    except requests.exceptions.RequestException as err:
+        raise Exception(f"Непредвиденная сетевая ошибка: {err}")
+# Добавлено / Конец
 
 def tg_create_post(message, photo_url=None):
     """Создает пост в Тelegram канале (с фото или без)."""
