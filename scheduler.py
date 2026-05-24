@@ -142,6 +142,12 @@ def delete_post(sheet, post, cell_list):
 
 
 def main():
+    print("SMM Planner — проект команды:")
+    print("  @skislyakow     — Sergey Kislyakov")
+    print("  @SlendyXG       — SlendyXG")
+    print("  @daschaosipova  — daschaosipova")
+    print("  @0rcb0n3-lab    — maxd31m0s")
+    print()
     log("Scheduler Запущен (VK + OK + TG)")
     log("Интервал проверки: 30 сек\n")
 
