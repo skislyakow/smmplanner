@@ -3,22 +3,19 @@ import json
 import hashlib
 
 import requests
-from dotenv import load_dotenv
 
 
-load_dotenv()
-
-ok_public_key = os.getenv('PUBLIC_KEY_OK')
-ok_secret_key = os.getenv('SECRET_KEY_OK')
-ok_group_gid = os.getenv('GROUP_GID_OK')
-ok_access_token = os.getenv('ACCESS_TOKEN_OK')
+ok_public_key = os.getenv("PUBLIC_KEY_OK")
+ok_secret_key = os.getenv("SECRET_KEY_OK")
+ok_group_gid = os.getenv("GROUP_GID_OK")
+ok_access_token = os.getenv("ACCESS_TOKEN_OK")
 
 
 def make_signature(params, ok_secret_key):
     sorted_keys = sorted(params.keys())
-    param_string = '|'.join([f"{k}={params[k]}" for k in sorted_keys])
-    sign_string = param_string + '|' + ok_secret_key
-    return hashlib.md5(sign_string.encode('utf-8')).hexdigest()
+    param_string = "|".join([f"{k}={params[k]}" for k in sorted_keys])
+    sign_string = param_string + "|" + ok_secret_key
+    return hashlib.md5(sign_string.encode("utf-8")).hexdigest()
 
 
 def api_request(method, params, ok_public_key, ok_secret_key, ok_access_token):
@@ -27,7 +24,7 @@ def api_request(method, params, ok_public_key, ok_secret_key, ok_access_token):
         "method": method,
         "access_token": ok_access_token,
         "format": "json",
-        **params
+        **params,
     }
     full_params["sig"] = make_signature(full_params, ok_secret_key)
 
@@ -47,9 +44,11 @@ def ok_create_post(message, photo_url=None):
         {
             "gid": ok_group_gid,
             "type": "GROUP_THEME",
-            "attachment": json.dumps({"media": media}, ensure_ascii=False)
+            "attachment": json.dumps({"media": media}, ensure_ascii=False),
         },
-        ok_public_key, ok_secret_key, ok_access_token
+        ok_public_key,
+        ok_secret_key,
+        ok_access_token,
     )
 
     return post_id
@@ -58,9 +57,8 @@ def ok_create_post(message, photo_url=None):
 def ok_delete_post(post_id):
     api_request(
         "mediatopic.deleteTopic",
-        {
-            "gid": ok_group_gid,
-            "topic_id": str(post_id)
-        },
-        ok_public_key, ok_secret_key, ok_access_token
+        {"gid": ok_group_gid, "topic_id": str(post_id)},
+        ok_public_key,
+        ok_secret_key,
+        ok_access_token,
     )

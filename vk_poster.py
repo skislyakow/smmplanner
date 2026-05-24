@@ -2,7 +2,6 @@ import os
 
 from datetime import datetime
 
-
 import requests
 import vk_api
 
@@ -34,11 +33,21 @@ def upload_photo_to_wall(photo_url):
     """Загружает фото на стену VK, возвращает attachment строку или None"""
     upload_server = vk_user.photos.getWallUploadServer(owner_id=VK_GROUP_ID)
     upload_url = upload_server["upload_url"]
-
-    photo_data = requests.get(photo_url).content
+    try:
+        photo_data = requests.get(photo_url).content
+    except requests.RequestException:
+        print(f"Ошибка загрузки фото: {photo_url[:60]}")
+        return None
     files = {"photo": ("photo.jpg", photo_data, "image/jpeg")}
 
-    upload_result = requests.post(upload_url, files=files).json()
+    upload_response = requests.post(upload_url, files=files, timeout=10)
+    try:
+        upload_result = upload_response.json()
+    except ValueError:
+        print(
+            f"Ошибка: сервер VK вернул не JSON. Status: {upload_response.status_code}"
+        )
+        return None
 
     if "photo" not in upload_result:
         print(f"Ошибка загрузки фото: {photo_url[:60]}")

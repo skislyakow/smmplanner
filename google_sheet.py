@@ -14,11 +14,19 @@ PLATFORM_COLS = {
 
 
 def make_text_beautiful(text):
-    """Очищает и форматирует текст"""
-    text = re.sub(r" +", " ", text)
-    text = re.sub(r" - ", " — ", text)
-    text = re.sub(r'(^|\s)"', r"\1«", text)
-    text = re.sub(r'"($|\s|[\.,!\?])', r"»\1", text)
+    if not text:
+        return ""
+    rules = [
+        (r"\s+--?\s+", " — "),
+        (r"\s+([.,!?;:])", r"\1"),
+        (r'"([^"\n]*?)"', r"«\1»"),
+        (r"'([^'\n]*?)'", r"«\1»"),
+        (r"[ \t]+", " "),
+        (r" +$| +^", ""),
+    ]
+    for pattern, replacement in rules:
+        text = re.sub(pattern, replacement, text, flags=re.MULTILINE)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
 
 
